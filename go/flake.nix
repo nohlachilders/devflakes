@@ -1,21 +1,32 @@
 {
     inputs = {
         nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-        devenv.url = "github:cachix/devenv";
         systems.url = "github:nix-systems/default";
         flake-utils = {
             url = "github:numtide/flake-utils";
             inputs.systems.follows = "systems";
         };
+
+        devenv.url = "github:cachix/devenv";
+        gomod2nix = {
+            url = "github:nix-community/gomod2nix";
+            inputs.nixpkgs.follows = "nixpkgs";
+        };
     };
 
-    outputs = { self, nixpkgs, devenv, flake-utils, ... } @ inputs:
+    outputs = { self, nixpkgs, devenv, flake-utils, gomod2nix, ... } @ inputs:
         flake-utils.lib.eachDefaultSystem (system: let
-            pkgs = nixpkgs.legacyPackages.${system};
+            pkgs = import nixpkgs {
+                inherit system;
+                overlays = [
+                    gomod2nix.overlays.default
+                ];
+            };
         in {
             packages = {
                 devenv-up = self.devShells.${system}.default.config.procfileScript;
                 devenv-test = self.devShells.${system}.default.config.test;
+                gomod2nix = inputs.gomod2nix.default;
             };
 
             devShells.default = devenv.lib.mkShell {
@@ -30,6 +41,7 @@
                         packages = with pkgs; [
                             gopls
                             delve
+                            gomod2nix.packages.${system}.default
                         ];
                     })
                 ];
