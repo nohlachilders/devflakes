@@ -7,14 +7,13 @@
             inputs.systems.follows = "systems";
         };
 
-        devenv.url = "github:cachix/devenv";
         gomod2nix = {
             url = "github:nix-community/gomod2nix";
             inputs.nixpkgs.follows = "nixpkgs";
         };
     };
 
-    outputs = { self, nixpkgs, devenv, flake-utils, gomod2nix, ... } @ inputs:
+    outputs = { self, nixpkgs, flake-utils, gomod2nix, ... } @ inputs:
         flake-utils.lib.eachDefaultSystem (system: let
             pkgs = import nixpkgs {
                 inherit system;
@@ -24,27 +23,18 @@
             };
         in {
             packages = {
-                devenv-up = self.devShells.${system}.default.config.procfileScript;
-                devenv-test = self.devShells.${system}.default.config.test;
                 gomod2nix = inputs.gomod2nix.default;
             };
 
-            devShells.default = devenv.lib.mkShell {
-                inherit inputs pkgs;
-                modules = [
-                    ({pkgs, config, ... }: {
-                        # stuff goes here
-                        languages.go = {
-                            enable = true;
-                            enableHardeningWorkaround = true;
-                        };
-                        packages = with pkgs; [
-                            gopls
-                            delve
-                            gomod2nix.packages.${system}.default
-                        ];
-                    })
+            devShells.default = pkgs.mkShell {
+                packages = with pkgs; [
+                    go
+                    gopls
+                    go-tools
+                    delve
+                    gomod2nix.packages.${system}.default
                 ];
+                hardeningDisable = ["all"];
             };
         }
         );
