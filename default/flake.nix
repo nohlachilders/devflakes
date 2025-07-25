@@ -11,22 +11,16 @@
 
     outputs = { self, nixpkgs, devenv, flake-utils, ... } @ inputs:
         flake-utils.lib.eachDefaultSystem (system: let
-            pkgs = nixpkgs.legacyPackages.${system};
+            pkgs = import nixpkgs {
+                inherit system;
+            };
         in {
             packages = {
-                devenv-up = self.devShells.${system}.default.config.procfileScript;
-                devenv-test = self.devShells.${system}.default.config.test;
             };
 
-            devShells.default = devenv.lib.mkShell {
-                inherit inputs pkgs;
-                modules = [
-                    ({pkgs, config, ... }: {
-                        # stuff goes here
-                        packages = with pkgs; [
-                            hello
-                        ];
-                    })
+            devShells.default = pkgs.mkShell {
+                packages = with pkgs; [
+                    hello
                 ];
             };
         }
