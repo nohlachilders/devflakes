@@ -1,7 +1,6 @@
 {
     inputs = {
         nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-        devenv.url = "github:cachix/devenv";
         systems.url = "github:nix-systems/default";
         flake-utils = {
             url = "github:numtide/flake-utils";
